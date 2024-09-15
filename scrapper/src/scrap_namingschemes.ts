@@ -69,6 +69,7 @@ export async function scrap_namingschemes() {
 			console.clear()
 			console.log('batch:', batch);
 			console.log(word.padEnd(25, '.'), `${(i / max * 100).toFixed(2)}%`, i, '/', max)
+			console.timeEnd('namingschemes-wise-lama');
 			i++;
 		} catch (error) {
 			bad.push({ word, error });
