@@ -46,11 +46,10 @@ export async function scrap_namingschemes() {
 	const bad: { word: string, error: Error }[] = [];
 	const ok: { [word: string]: string[] } = {};
 
-	console.time('namingschemes-wise-lama');
+	const t_start = Date.now();
 	let i = 0;
-	let j = 0;
 	const max = Object.keys(namingschemes_words).length
-	const BATCH_SIZE = 20
+	const BATCH_SIZE = 8
 	const batches_count = Math.floor(max / 20);
 	for (let batch = 0; batch < batches_count; batch++) {
 		const lama_promises: Array<Promise<void>> = [];
@@ -67,15 +66,14 @@ export async function scrap_namingschemes() {
 			if (!(Array.isArray(adjectives) && adjectives.every(item => typeof item === 'string'))) throw "Bad Lama BAD!"
 			ok[word] = adjectives;
 			console.clear()
-			console.log('batch:', batch);
+			console.log('batch:', batch, '/', batches_count);
 			console.log(word.padEnd(25, '.'), `${(i / max * 100).toFixed(2)}%`, i, '/', max)
-			console.timeEnd('namingschemes-wise-lama');
+			console.log('running time:', `${((Date.now() - t_start) / 1000).toFixed(2)}s`)
 			i++;
 		} catch (error) {
 			bad.push({ word, error });
 		}
 	}
 
-	console.timeEnd('namingschemes-wise-lama');
 	return { bad, ok };
 }
