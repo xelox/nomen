@@ -43,15 +43,15 @@ export async function scrap_namingschemes() {
 	}
 
 	await Promise.all(sub_docs_promises);
-	const bad: string[] = [];
-	const ok: { [word: string]: string } = {};
+	const bad: { word: string, error: Error }[] = [];
+	const ok: { [word: string]: string[] } = {};
 
 	console.time('namingschemes-wise-lama');
 	let i = 0;
 	let j = 0;
 	const max = Object.keys(namingschemes_words).length
 	const lama_promises: Array<Promise<void>> = [];
-	for (const [word, set] of Object.entries(namingschemes_words).slice(0, 400)) {
+	for (const [word, set] of Object.entries(namingschemes_words).slice(400, 500)) {
 		console.clear()
 		console.log('launching wise-lama', `${(j / max * 100).toFixed(2)}%`, j, '/', max)
 		j++;
@@ -64,12 +64,13 @@ export async function scrap_namingschemes() {
 		try {
 			if (json === null || json.length === 0) throw 'No square braces. Why Wise Lama?';
 			const adjectives = JSON.parse(json[0]);
+			if (!(Array.isArray(adjectives) && adjectives.every(item => typeof item === 'string'))) throw "Bad Lama BAD!"
 			ok[word] = adjectives;
 			console.clear()
 			console.log(word.padEnd(25, '.'), `${(i / max * 100).toFixed(2)}%`, i, '/', max)
 			i++;
-		} catch (_) {
-			bad.push(word);
+		} catch (error) {
+			bad.push({ word, error });
 		}
 	}
 
