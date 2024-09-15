@@ -25,16 +25,16 @@ async function assert_wise_lama_is_running() {
 	}
 }
 
-export async function ask_the_wise_lama(questions: [string]): Promise<string> {
+export async function ask_the_wise_lama(question: string): Promise<string> {
 	await assert_wise_lama_is_running();
 	const options: RequestInit = {
 		method: 'POST',
 		body: JSON.stringify({
 			model: 'llama3',
-			messages: questions.map(q => { return { role: 'user', content: q } }),
+			messages: [{ role: 'user', content: question }],
 			stream: false
 		})
 	}
 	const wise_response = await fetch('http://localhost:11434/api/chat', options);
-	return await wise_response.json()
+	return (await wise_response.json()).message.content
 }
