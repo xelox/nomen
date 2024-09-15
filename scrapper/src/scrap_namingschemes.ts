@@ -50,23 +50,24 @@ export async function scrap_namingschemes() {
 	let i = 0;
 	let j = 0;
 	const max = Object.keys(namingschemes_words).length
-	const lama_promises: Array<Promise<void>> = [];
-	for (const [word, set] of Object.entries(namingschemes_words).slice(400, 500)) {
-		console.clear()
-		console.log('launching wise-lama', `${(j / max * 100).toFixed(2)}%`, j, '/', max)
-		j++;
-		lama_promises.push(ask_adjectives(word, set))
+	const BATCH_SIZE = 20
+	const batches_count = Math.floor(max / 20);
+	for (let batch = 0; batch < batches_count; batch++) {
+		const lama_promises: Array<Promise<void>> = [];
+		for (const [word, set] of Object.entries(namingschemes_words).slice(batch * BATCH_SIZE, (batch + 1) * BATCH_SIZE)) {
+			lama_promises.push(ask_adjectives(word, set, batch))
+		}
+		await Promise.all(lama_promises);
 	}
-	async function ask_adjectives(word: string, set: string): Promise<void> {
+	async function ask_adjectives(word: string, set: string, batch: number): Promise<void> {
 		const question = `Compile a list of adjectives that describe the word "${word}", This word was taken from a group of words called "${set}". Answer only with a valid JSON array of strings. Don't provide any other explanation. Don't add Code Block.`;
 		const wise_response = await ask_the_wise_lama(question)
-		const json = wise_response.match(/(\[.*?\])/);
 		try {
-			if (json === null || json.length === 0) throw 'No square braces. Why Wise Lama?';
-			const adjectives = JSON.parse(json[0]);
+			const adjectives = JSON.parse(wise_response);
 			if (!(Array.isArray(adjectives) && adjectives.every(item => typeof item === 'string'))) throw "Bad Lama BAD!"
 			ok[word] = adjectives;
 			console.clear()
+			console.log('batch:', batch);
 			console.log(word.padEnd(25, '.'), `${(i / max * 100).toFixed(2)}%`, i, '/', max)
 			i++;
 		} catch (error) {
@@ -74,7 +75,6 @@ export async function scrap_namingschemes() {
 		}
 	}
 
-	await Promise.all(lama_promises);
 	console.timeEnd('namingschemes-wise-lama');
 	return { bad, ok };
 }
